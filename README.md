@@ -1,7 +1,9 @@
 Typhon: trustless Bitcoin sidechain protocol
 ===
 
-Typhon is Bitcoin second-layer technology – the same kind as Lightning network. You can think of it as of massively-scalable multiparty payment channels. The protocol defines the process of sidechain formation and updates that require commits to the main Bitcoin blockchain. It is censorship-resistant, permissionless and agnostic to the particular consensus and blockchain formation protocol used by particular sidechain implementations. 
+*Dr Maxim Orlovsky, [BICA Labs](http://bicalabs.org) & [Pandora Project](https://manifesto.ai)*
+
+Typhon is Bitcoin second-layer technology – the same kind as Lightning network. You can think of it as of massively-scalable multiparty payment channels. The protocol defines the process of sidechain formation and operation on top of the main Bitcoin blockchain. It is censorship-resistant, permissionless and agnostic to the particular consensus and blockchain formation protocol used by sidechain implementations. 
 
 Name Typhon comes from Greek mythology, it's a kind of multi-coiled snake or dragon that is able to bring storms:  "multiple coils" serve as an analogy to multiple sidechains, while "storms" are the analogy for supreme qualities of this 2nd layer technology as compared to simple payment channels.
 
@@ -10,7 +12,13 @@ Name Typhon comes from Greek mythology, it's a kind of multi-coiled snake or dra
 Motivation
 ---
 
-*TBD. Briefly: Lightning has some limitations, existing sidechain 2-way peg technologies requires soft or hardforks, and currently can operate only in trusted mode as federation. We need more scalable 2-nd layer technologies without these limitations.*
+*TL;DR: Lightning has some limitations, existing sidechain 2-way peg technologies requires soft or hardforks, and currently can operate only in trusted mode as federation. We need more scalable 2-nd layer technologies without these limitations.*
+
+The idea for the protocol originated from my research on the lack of deterministic finality in PoW consensus which makes very hard to design trustless sidechains without decreasing the security of the main chain. The absence of the finality in PoW consensus is actually an important trade-off decision that allows to run the main chain in censorship-resistant manner.
+
+So why do we need sidechains at all if we have the Lightning network? A lot of reasons; one of them is that there is a class of potential bitcoin applications that require global state (which Lightning technology obviously does not have) – like [proof of computing work protocol](https://www.slideshare.net/pandoraboxchain/proof-of-computing-work-protocol-by-pandora-boxchain) for scaling high-load computing in censorship-resistant way previously designed by my team. Such solutions can’t be put onto the main PoW chain because of its scalability problems. But what if, instead of 2-way peg sidechains (which with the current bitcoin protocol version can be only federated, i.e. not censorship-resistant), we use the same technology to take bitcoins off the main chain like in the Lightning network, but instead of bringing them into the "payment channel" we will leave them locked ("locked stake") with some CLTV/HTLC-kind of a contract? You can think of it as a "Lightning sidechain" — or, simply, typhoon (something much larger than just a lightning). Yes, the lightning itself does not need a "chain" (since it does not need a global state), but as I told earlier, many other apps on top of bitcoin will need such thing.
+
+Such sidechains can run any non-PoW consensus which (a) would not produce inflation, operating only on commissions, (b) will take "block producers" from that HTLC-like commitment transactions on the main bitcoin PoW chain, which will guarantee censorship resistance even if the sidechain protocol is not censorship-resistant by itself (kind of "PoW externality for censorship-resistance"); it can be used to build lightning channels on top of it – i.e. be a kind of generic sidechain protocol without drawbacks of existing 2-way peg type sidechains. As for bitcoin itself, it will render bitcoin as a platform for many kinds of applications and use cases it can’t be used today, increasing its adoption outside of SoV/MoE + micropayments paradigms in such domains as high load computing, data synchronisation etc – everything that requires global state that can't fit into the 1st layer or be held in existing 2-nd layer stack in a trustless manner.
 
 General Design
 ---
