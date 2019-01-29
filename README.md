@@ -16,7 +16,7 @@ Motivation / Cover Letter
 
 *TL;DR: Lightning has some limitations, existing sidechain 2-way peg technologies requires soft or hardforks, and currently can operate only in trusted mode as federation. We need more scalable 2-nd layer technologies without these limitations.*
 
-The idea for the protocol originated from my research on the lack of deterministic finality in PoW consensus which makes very hard to design trustless sidechains without decreasing the security of the main chain with a new soft- or hard-forks. At the same timetThe absence of the finality in PoW consensus is an important trade-off decision allowing to run the main chain in censorship-resistant manner, so we can't do anything with it.
+The idea for the protocol originated from my research on the lack of deterministic finality in PoW consensus which makes very hard to design trustless sidechains without decreasing the security of the main chain with a new soft- or hard-forks. At the same time the absence of a finality property in PoW consensus is an important trade-off decision allowing to run the main chain in censorship-resistant manner, so we can't do anything with it.
 
 So why do we need sidechains at all if we have the Lightning network? A lot of reasons; one of them is that there is a class of potential bitcoin applications that require global state (which Lightning technology obviously does not have) – like [proof of computing work protocol](https://www.slideshare.net/pandoraboxchain/proof-of-computing-work-protocol-by-pandora-boxchain) for scaling high-load computing in censorship-resistant way previously designed by my team. Such solutions can’t be put onto the main PoW chain because of its scalability problems. But what if, instead of 2-way peg sidechains (which with the current bitcoin protocol version can be only federated, i.e. not censorship-resistant), we use the same technology to take bitcoins off the main chain like in the Lightning network, but instead of bringing them into the "payment channel" we will leave them locked ("locked stake") with some CLTV/HTLC-kind of a contract? You can think of it as a "Lightning sidechain" – or, simply, typhoon (something much larger than just a lightning). Yes, the lightning itself does not need a "chain" (since it does not need a global state), but as I told earlier, many other apps on top of bitcoin will need such thing.
 
@@ -53,6 +53,13 @@ The sidechain is blockchain-based replicating state machine with a shared global
 At the end of each epoch the stakes of the *leaders* that have being found Byzantine-faulty by the sidechain *honest majority* are **slashed** to the main chain miner that will include the **slashing transaction** to the bitcoin blockchain while the rest of the *leaders* will be able to unlock their funds at the end of the next epoch.
 
 Main chain bitcoins can be moved to and from the sidechain in a quick manner using atomic swap contracts between the main chain and sidechain participants.
+
+### Differences to Existing 2nd Layer Technologies
++ The protocol does not require to lock the funds in order to transfer them off-chain, instead it relies on atomic swapps with the main chain for liquidity provision
++ The funds locked in the *commitment transactions* are just time-locked and can't be used off-chain like with  2-way pegs or Lightning payment channel HTLC-contracts.
++ No other party is required to become participant of the Typhon sidechain, while Lightning protocol requires to find the other party for payment channel setup and 2-way-pegged sidechain requires federation for the multisig peg contract.
++ Quick on-chain settlement/finalization, while the closing of Lightning channels or releasing funds from the peg takes much more time.
++ No complex multisig or multiparty unsigned contracts required: each participants enters and leaves the Typhon sidechain with a much simple P2WSH/P2SH transaction with only one output. The commitment transaction occupies much smaller on-chain size than multisig transactions from sidechain federation or Lightning payment channel.
 
 Protocol Details
 ---
