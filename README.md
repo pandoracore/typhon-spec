@@ -3,7 +3,7 @@ Typhon: trustless Bitcoin sidechain protocol
 
 Typhon is Bitcoin second-layer technology – the same kind as Lightning network. You can think of it as 
 of massively-scalable multiparty payment channels. Name Typhon comes from Greek mythology, it's a kind of
-multi-coiled snake or dragon that is able to bring storms: multiple coins are multiple sidechains and storms 
+multi-coiled snake or dragon that is able to bring storms: multiple coils are multiple sidechains and storms 
 are the analogy for supreme qualities of this 2nd layer technology as compared to the Lightning network.
 
 *Lightning ⚡️ brings thunderbolt 🌩 – Typhon 🐉 brings typhoon🌪*
