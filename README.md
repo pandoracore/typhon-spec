@@ -105,7 +105,7 @@ A party running the protocol must follow this algorithm:
                                       -- from the other parties
 ```
 
-At the end of this protocol cycle each party has its own tweaked (homomorphically-derived) public key which will be used for creating the *commitment transaction* lately. 
+At the end of this protocol each party will have its own tweaked (homomorphically-derived) public key `T_a` which can be used for creating the *commitment transaction* lately (see the next section). 
 
 The private key is not revealed during the normal flow of the protocol; it is used only in case of the discovered Byzantine faults during the epoch (see below). In such a case each of the *honest majority* `M` parties `a` must execute the following protocol against the Byzantyne-fault party `e`:
 ```
