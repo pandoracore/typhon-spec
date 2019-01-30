@@ -3,13 +3,13 @@ Typhon: trustless Bitcoin sidechain protocol
 
 *Dr Maxim Orlovsky, [BICA Labs](http://bicalabs.org) & [Pandora Project](https://manifesto.ai)*
 
-**NB: This is the work in progress protocol draft. Fell free to propose PR's and discuss using GitHub issues**
+**NB: This protocol draft is the work in progress. Feel free to propose PR's and discuss using GitHub issues**
 
 Typhon is Bitcoin second-layer technology – the same kind as Lightning network. You can think of it as of massively-scalable multiparty payment channels. The protocol defines the process of sidechain formation and operation on top of the main Bitcoin blockchain. It is censorship-resistant, permissionless and agnostic to the particular consensus and blockchain formation protocol used by sidechain implementations. 
 
 Name Typhon comes from Greek mythology, it's a kind of multi-coiled snake or dragon that is able to bring storms:  "multiple coils" serve as an analogy to multiple sidechains, while "storms" are the analogy for supreme qualities of this 2nd layer technology as compared to simple payment channels.
 
-*Lightning ⚡️ brings thunderbolt 🌩 – Typhon 🐉 brings typhoon🌪*
+*Lightning⚡️ brings thunderbolt🌩 – Typhon🐉 brings typhoon🌪*
 
 Motivation / Cover Letter
 ---
@@ -74,11 +74,72 @@ The protocol results in creation and revealing of ECDSA public keys `P(i)` speci
 
 ### Commiting to a sidechain
 
+**Commitment transaction**
 
+*Commitment transaction* is published by a *commiter* – the party interested in joining the Typhoon consensus
+participants.
+
+Let `A` be a un-tweaked public key of the *committer* and `H(A)` the `RIPMD160` hash value derived from it. Then the `ScriptPubKey` of the commitment transaction should contain the following script:
+
+```
+// This is one of the options for the commiter to specify sidechain id so the transaction can be 
+// attributed to the specific sidechain
+<SidechainID>
+OP_DROP
+
+// Now at the top of the stack we have content provided by ScriptSig unlocking transaciton, so we
+// proceed with CLTV-enhanced P2PKH scripts
+OP_DUP
+OP_HASH160
+
+// Branch used by the commiter if there were no Byzantine fault discovered by the honest majority.
+// This is normal P2PKH transaction enhanced with CLTV script to enable suffiicient time until
+// the epoch was finalized + another epoch for the honest majority to reach the agreement that
+// there were no Byzantine faults
+IF
+    <H(A)> 
+    OP_EQUALVERIFY
+    <Time-for-two-epochs> 
+
+// Branch used by the honest community if it have agreed upon Byzantine fault of the committer
+// In such case they reveal the hidden private key x_i corresponding to the public key P_i
+// by running reveal stage of the threshold secret sharing protocol
+ELSE
+    <H(P_i)>
+    OP_EQUALVERIFY
+    <Time-for-one-epoch + some additional time> 
+
+ENDIF
+
+// At top of the stack we have lock time value, so let's check it
+OP_CHECKLOCKTIMEVERIFY
+OP_DROP
+
+// In both cases we still need to check that the spending transaction is signed with the proper
+// private key
+OP_CHECKSIG
+```
+
+This script reveals no more private information about the commiter or any other party participating sidechain than a normal P2PKH transaction. In fact it is composed of two P2PKH branches enhanced with CLTV part.
+
+**Unlocking transactions**
+
+Let `ECDSA(*)` be a signature with some private key `*`. According to the notation from the previous sections, `x_i` is the private key that can be only discovered by the *hones majority* in case they can reach the agreement that the *commiter* (party `i`) had performed a Byzantine fault within the epoch time scope corresponding to the original *commitment transaction*. `P_i` is the public key of the committer revealed as a result of the *Apophis* protocol; `y` and `A` are the normal private and public keys of the committer.
+
+Once the `x_i` becomes revealed any participant of the honest majority can construct and publish *slashing transaction* spending UTXO from the *commitment transaction* to the output that can be used by slashing transaction originator. This transaction will containt the following `SigScript`: `<ECDSA(x_i)> <P_i>`.
+
+This script will become valid only after the CLTV time from the second branch of the *commitment transaction* will pass, so other participants of the *honest majority* have an opportunity to publish their versions with the same unlocking script, but spending the locked amount to different UTXOs, but with a higher miner fee. This will lead to the fee race, effectively resulting in Nash equilibrium when practically all of the locked amount is spent for the mining fee, i.e. the money will be transferred to the miner who will include the slashing transactions into the blockchain, guaranteeing fast and efficient slashing before the other CLTV lock will expire. This also keeps economic incentives of the honest majority intact: they win nothing by cooperating against other participants, so the Nash equilibrium for the sidechain consensus protocol is not distorted.
+
+If there were no withessed Byzantine fault from the committer, he will be able to unlock its funds at the end of the ceond epoch with the usual `SigScript`: `<ECDSA(y)> <A>` – and nobody else will be able to spend the UTXO of the *commitment transaction*.
 
 ### Running sidechain epoch
 
+*TBD*
+
 ### Handling sidechain Byzantine faults
+
+*TBD*
 
 ### Moving bitcoins to and from sidechain
 
+*TBD*
