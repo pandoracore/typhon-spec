@@ -11,7 +11,7 @@ The name "Typhon" comes from Greek mythology, it's a kind of multi-coiled snake 
 
 *Lightning⚡️ brings thunderbolt🌩 – Typhon🐉 brings typhoon🌪*
 
-Motivation / Cover Letter
+Motivation & cover letter
 ---
 
 **TL;DR**: *Lightning has limitations; existing sidechain 2-way peg technologies require soft or hardforks, and currently can operate only in trusted mode under federated multisig contracts. There is need to design more scalable 2-nd layer technologies without these limitations.*
@@ -26,12 +26,12 @@ Such sidechains can run any non-PoW consensus which:
 
 This will guarantee censorship resistance even if the sidechain protocol is not censorship-resistant by its design (you can think of it as a kind of "PoW externality for censorship-resistance"). Sidechains can be used to build lightning channels on top of it – i.e. be a kind of generic sidechain protocol without drawbacks of existing 2-way peg type sidechains. As for bitcoin itself, sidechains will render bitcoin as a platform for many kinds of applications and use cases it can’t be used today, increasing its adoption outside of SoV/MoE + micropayments paradigms in such domains as high load computing, data synchronisation etc – everything that requires global state that can't fit into the 1st layer or be held in existing 2-nd layer stack in a trustless manner.
 
-General Design
+General design
 ---
 
 Typhon is a **non-2-way peg** trustless sidechain solution that can be implemented using existing Bitcoin Script functionality, i.e. without any soft- or hardforks.
 
-### Design Principles
+### Design principles
 + **Censorship resistance**: the protocol is permissionless and allow at least the same level of censorship resistance as the main Bitcoin PoW chain.
 + **Native to Bitcoin**: the protocol allows fast Bitcoin transfers to and from sidechain.
 + **Nothing more then Bitcoin**: the protocol does not require any new/special tokens or coins for its operations. Economic incentives can be commission/fee-based and are not part of this specification.
@@ -39,7 +39,7 @@ Typhon is a **non-2-way peg** trustless sidechain solution that can be implement
 + **High Byzantine tolerance**: the protocol tolerates up to 50%-1 Byzantine faults.
 + **Off-chain**: most of the protocol communications are performed outside of Bitcoin blockchain.
 
-### Core Assumptions
+### Core assumptions
 
 The protocol operates under the following assumptions:
 + Elliptic curve discrete logarithm problem (ECDLP) is an NP-problem having no feasible deterministic solution.
@@ -60,14 +60,14 @@ At the end of each epoch the stakes of the *leaders* that have been found Byzant
 
 Main chain bitcoins can be moved to and from the sidechain in a quick manner using atomic swap contracts between the main chain and sidechain participants.
 
-### Differences to Other 2nd Layer Technologies
+### Differences with the other 2nd layer technologies
 + The protocol does not require to lock the funds in order to transfer them off-chain, instead it relies on atomic swaps with the main chain for liquidity provision
 + The funds locked in the *commitment transactions* are just time-locked and can't be used off-chain like with  2-way pegs or Lightning payment channel HTLC-contracts.
 + No other party is required to participate the Typhon sidechain, while Lightning protocol requires to find the other party for payment channel setup and 2-way-pegged sidechain requires federation for the multisig peg contract.
 + Quick on-chain settlement/finalization, while the closing of Lightning channels or releasing funds from the peg takes much more time.
 + No complex multisig or multiparty unsigned contracts required: each of the participants enters and leaves the Typhon sidechain with a much simple P2WSH/P2SH transaction with only one output. The commitment transaction occupies much smaller on-chain size than multisig transactions from sidechain federation or Lightning payment channel.
 
-Protocol Details
+Protocol details
 ---
 
 ### Apophis protocol
@@ -175,4 +175,8 @@ Once the `x_a` becomes revealed any participant of the honest majority can const
 
 This script will become valid only after the CLTV time from the second branch of the *commitment transaction* will pass, so other participants of the *honest majority* have an opportunity to publish their versions with the same unlocking script, but spending the locked amount to different UTXOs, but with a higher miner fee. This will lead to the "fees race", effectively resulting in Nash equilibrium when practically all of the locked amount is spent for the mining fee, i.e. the money will be transferred to the miner who will include the slashing transactions into the blockchain, guaranteeing fast and efficient slashing before the other CLTV lock will expire. This also keeps economic incentives of the honest majority intact: they win nothing by cooperating against other participants, so the Nash equilibrium for the sidechain consensus protocol is not distorted.
 
-If there were no witnessed Byzantine fault from the committer, he will be able to unlock its funds at the end of the second epoch with the usual `SigScript`: `<ECDSA(y)> <A>` – and nobody else will be able to spend the UTXO of the *commitment transaction*.
+If there were no witnessed Byzantine fault from the committer, he will be able to unlock its funds at the end of the second epoch with the usual `SigScript`: `<ECDSA(y)> <A>` without the risks that some other parties will be able to spend the UTXO of the *commitment transaction*.
+
+## Acknowledgements
+
+I would like to thank Giacomo Zucco for the fruitful discussions on Bitcoin technology stack and its future directions; as well for his critics and analytics that inspired me to do this work. I am also very grateful to the whole Pandora project and [Garuda.AI](https://garuda.ai) teams, with which I spent many hours working on consensus protocol designs and distributed technologies research.
