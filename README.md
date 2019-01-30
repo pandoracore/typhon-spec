@@ -66,13 +66,53 @@ Protocol Details
 
 ### Apophis protocol
 
-*TBD*
+The protocol is run by all parties wishing to participate the sidechain epoch. It utilizes homomorphic properties of public keys on elliptic curves.
 
-The protocol results in creation and revealing of ECDSA public keys `P(i)` specific to each party `i` and the creation of corresponding party-specific unknown private keys `x(i)`. Private keys are unknown because they are kept in distributed way by all protocol participants in a form of shared secrets under threshold signatures algorithm so each of them can't be revealed without agreement from the *honest majority* of the participants.
+The protocol results in creation and revealing of epoch-specific ECDSA public keys `P(a)` specific to each party `a` and the creation of corresponding party-specific unknown private keys `x(a)`. Private keys are unknown because they are kept in distributed way by all protocol participants in a form of shared secrets under threshold signatures algorithm so each of them can't be revealed without agreement from the *honest majority* of the participants.
 
-*Apophis is another snake from Greek (and initially Egyptian) mythology, a predecessor of the Typhon. It hides in a dark abyss in the underworld, like the private keys from the protocol above.*
+One protocol run cycle allows creation of only one `P(a)` and `x(a)` key pairs for some participant `a`. So given the set of participating parties `N` the protocol should be run `|N|` times.
 
-### Commiting to a sidechain
+A party running the protocol must follow this algorithm:
+```
+∀ a ∈ N:                     -- each participating party:
+    rₐ ← rand()                 -- generates random number - a private key
+    Pₐ ← rₐG                    -- derives sekp256k1 public key with generator G
+    Hₐ ← RIPEMD160(Pₐ.x)        -- hashes x-coordinate of the public key
+    sₐ ← ECDSA(Hₐ,rₐ)           -- creates signature for the hash using the generated private key
+    ⟨Hₐ,sₐ⟩ ⇢ 𝒩                -- publishes the hash and signature to the network
+    SSSS<xₐ> ⇢ 𝒩              -- run Shamir secret sharing scheme agains the private key
+                                -- and its digital signature with the network
+    ℍ ← ∅                      -- instantiates set for keeping all hashes and signatures 
+                                -- of the other parties
+    ∀ ⟨Hₓ,sₓ | x ∈ N⟩ ⇠ 𝒩      -- for each x-th hash-signature tuple collected from the network:
+        ℍ ← ℍ ∪ { ∀ ⟨Hₓ,sₓ⟩ }       -- saves correct hashes and signatures
+    |ℍ| = |N|:                  -- when all the signatures are collected
+        Pₐ ⇢ 𝒩                    -- publishes the public key to the network
+        ℙ ← ∅                      -- instantiates set for public keys of the other parties x 
+        ∀ Pₓ | x ∈ N ⇠ 𝒩:         -- for each x-th public key collected from the network:
+            RIPEMD160(Pₓ) = Hₓ:        -- checks that the public key corresponds to 
+                                       -- the hash commitment by the party x
+                valid(sₓ, Pₓ):            -- checks the stored signature against 
+                                          -- the collected public key
+                    ℙ ← ℙ ∪ { Pₓ }           -- collects all valid public keys
+        |ℙ| = |N|:                 -- when everything is collected:
+            Tₐ ← tweak(Pₐ, ℙ)         -- creates homomorphically-derived public key
+                                      -- by tweaking public key using the rest of the public keys 
+                                      -- from the other parties
+```
+
+At the end of this protocol cycle each party has its own tweaked (homomorphically-derived) public key which will be used for creating the *commitment transaction* lately. 
+
+The private key is not revealed during the normal flow of the protocol; it is used only in case of the discovered Byzantine faults during the epoch (see below). In such a case each of the *honest majority* `M` parties `a` must execute the following protocol against the Byzantyne-fault party `e`:
+```
+∀ a ∈ M:
+    rₑ ← SSRS<xₐ>               -- obtain private key of the Byzantine-fault party e 
+                                -- using Shamir secret reveal scheme
+    xₑ ← tweak(rₑ, ℙ)           -- obtain tweaked private key corresponding to the Tₑ public key 
+                                -- used by the Byzantine fault party to sign its commitment transaction 
+```
+
+**TL;DR**: *Apophis is another snake from Greek (and initially Egyptian) mythology, a predecessor of the Typhon. It hides in a dark abyss in the underworld, like the private keys from the protocol above are hidden behind threshold secret sharing algorithm.*
 
 ##Commitment transaction
 
@@ -103,10 +143,10 @@ OP_IF
     <Time-for-two-epochs> 
 
 // Branch used by the honest community if it have agreed upon Byzantine fault of the committer
-// In such case they reveal the hidden private key x_i corresponding to the public key P_i
+// In such case they reveal the hidden private key x_a corresponding to the public key T_a
 // by running reveal stage of the threshold secret sharing protocol
 OP_ELSE
-    <H(P_i)>
+    <H(T_a)>
     OP_EQUALVERIFY
     <Time-for-one-epoch + some additional time> 
 
@@ -125,9 +165,9 @@ This script reveals no more private information about the commiter or any other 
 
 ### Unlocking transactions
 
-Let `ECDSA(*)` be a signature with some private key `*`. According to the notation from the previous sections, `x_i` is the private key that can be only discovered by the *hones majority* in case they can reach the agreement that the *commiter* (party `i`) had performed a Byzantine fault within the epoch time scope corresponding to the original *commitment transaction*. `P_i` is the public key of the committer revealed as a result of the *Apophis* protocol; `y` and `A` are the normal private and public keys of the committer.
+Let `ECDSA(*)` be a signature with some private key `*`. According to the notation from the previous sections, `x_a` is the private key that can be only discovered by the *hones majority* in case they can reach the agreement that the *commiter* (party `i`) had performed a Byzantine fault within the epoch time scope corresponding to the original *commitment transaction*. `T_a` is the public key of the committer revealed as a result of the *Apophis* protocol; `y` and `A` are the normal private and public keys of the committer.
 
-Once the `x_i` becomes revealed any participant of the honest majority can construct and publish *slashing transaction* spending UTXO from the *commitment transaction* to the output that can be used by slashing transaction originator. This transaction will containt the following `SigScript`: `<ECDSA(x_i)> <P_i>`.
+Once the `x_a` becomes revealed any participant of the honest majority can construct and publish *slashing transaction* spending UTXO from the *commitment transaction* to the output that can be used by slashing transaction originator. This transaction will containt the following `SigScript`: `<ECDSA(x_a)> <T_a>`.
 
 This script will become valid only after the CLTV time from the second branch of the *commitment transaction* will pass, so other participants of the *honest majority* have an opportunity to publish their versions with the same unlocking script, but spending the locked amount to different UTXOs, but with a higher miner fee. This will lead to the fee race, effectively resulting in Nash equilibrium when practically all of the locked amount is spent for the mining fee, i.e. the money will be transferred to the miner who will include the slashing transactions into the blockchain, guaranteeing fast and efficient slashing before the other CLTV lock will expire. This also keeps economic incentives of the honest majority intact: they win nothing by cooperating against other participants, so the Nash equilibrium for the sidechain consensus protocol is not distorted.
 
