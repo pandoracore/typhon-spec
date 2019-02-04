@@ -78,28 +78,29 @@ The protocol results in the creation and revealing of epoch-specific ECDSA publi
 
 A party running the protocol must follow this algorithm:
 ```
-∀ a ∈ N:                     -- each participating party:
+∀ a ∈ N:                     -- each participating party 'a':
     rₐ ← rand()                 -- generates random number - a private key
-    Pₐ ← rₐG                    -- derives sekp256k1 public key with generator G
+    Pₐ ← rₐG                    -- derives secp256k1 public key with generator G
     Hₐ ← RIPEMD160(Pₐ.x)        -- hashes x-coordinate of the public key
     sₐ ← ECDSA(Hₐ,rₐ)           -- creates a signature for the hash using the generated private key
     ⟨Hₐ,sₐ⟩ ⇢ 𝒩                -- publishes the hash and signature to the network
-    SSSS<xₐ> ⇢ 𝒩               -- runs Shamir secret sharing scheme against the private key
+    SSSS<rₐ> ⇢ 𝒩               -- runs Shamir secret sharing scheme against the private key
                                 -- and its digital signature with the network
     ℍ ← ∅                       -- instantiates set for keeping all hashes and signatures 
                                 -- of the other parties
     ∀ ⟨Hₓ,sₓ | x ∈ N⟩ ⇠ 𝒩      -- for each x-th hash-signature tuple collected from the network:
         ℍ ← ℍ ∪ { ∀ ⟨Hₓ,sₓ⟩ }       -- saves correct hashes and signatures
-    |ℍ| = |N|:                  -- when all the signatures are collected
+    |ℍ| = |N|:                  -- when all the signatures are collected, the party 'a':
         Pₐ ⇢ 𝒩                    -- publishes the public key to the network
-        ℙ ← ∅                      -- instantiates set for public keys of the other parties x 
-        ∀ Pₓ | x ∈ N ⇠ 𝒩:         -- for each x-th public key collected from the network:
-            RIPEMD160(Pₓ) = Hₓ:        -- checks that the public key corresponds to 
-                                       -- the hash commitment by the party x
-                valid(sₓ, Pₓ):            -- checks the stored signature against 
-                                          -- the collected public key
-                    ℙ ← ℙ ∪ { Pₓ }           -- collects all valid public keys
-        |ℙ| = |N|:                 -- when everything is collected:
+        ℙ ← ∅                      -- instantiates set for public keys of the other parties 'x' 
+        ∀ Pₓ | x ∈ N ⇠ 𝒩:         -- for each x-th public key collected from the network, the party 'a':
+            RIPEMD160(Pₓ) = Hₓ:       -- checks that the public key corresponds to 
+                                      -- the hash commitment by the party 'x', the party 'a':
+                valid(sₓ, Pₓ):           -- checks the stored signature against 
+                                         -- the collected public key
+                    ℙ ← ℙ ∪ { Pₓ }          -- collects all valid public keys
+        |ℙ| = |N|:                 -- when everything is collected, the party:
+            Tₐ ← Pₐ + RIPEMD160(|| ℙ) * G
             Tₐ ← tweak(Pₐ, ℙ)         -- creates a homomorphically-derived public key
                                       -- by tweaking public key using the rest of the public keys 
                                       -- from the other parties
@@ -112,6 +113,7 @@ The private key is not revealed during the normal flow of the protocol; it is us
 ∀ a ∈ M:
     rₑ ← SSRS<xₐ>               -- obtain private key of the Byzantine-fault party e 
                                 -- using Shamir secret reveal scheme
+    xₑ ← rₑ + RIPEMD160(|| ℙ)
     xₑ ← tweak(rₑ, ℙ)           -- obtain tweaked private key corresponding to the Tₑ public key 
                                 -- used by the Byzantine fault party to sign its commitment transaction 
 ```
@@ -179,4 +181,4 @@ If there were no witnessed Byzantine fault from the committer, he will be able t
 
 ## Acknowledgements
 
-I would like to thank Giacomo Zucco for the fruitful discussions on Bitcoin technology stack and its future directions; as well for his critics and analytics that inspired me to do this work. I am also very grateful to the whole Pandora project and [Garuda.AI](https://garuda.ai) teams, with which I spent many hours working on consensus protocol designs and distributed technologies research.
+I would like to thank Giacomo Zucco for the fruitful discussions on Bitcoin technology stack and its future directions; as well for his critics and analytics that inspired me to do this work. I am also very grateful to the whole Pandora project and [Garuda.AI](https://garuda.ai) teams, with which I spent many hours working on different consensus protocol designs and distributed technologies research.
