@@ -9,6 +9,8 @@ Typhon is Bitcoin second-layer technology – the same kind as the Lightning net
 
 The name "Typhon" comes from Greek mythology, it's a kind of multi-coiled snake or dragon that is able to bring storms:  "multiple coils" serve as an analogy to multiple sidechains, while "storms" are the analogy for supreme qualities of this 2nd layer technology as compared to simple payment channels.
 
+![Typhon Logo](assets/typhon.png)
+
 *Lightning⚡️ brings thunderbolt🌩 – Typhon🐉 brings typhoon🌪*
 
 Motivation & cover letter
