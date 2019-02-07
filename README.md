@@ -45,7 +45,7 @@ Typhon is a **non-2-way peg** trustless sidechain solution that can be implement
 
 The protocol operates under the following assumptions:
 + Elliptic curve discrete logarithm problem (ECDLP) is an NP-problem having no feasible deterministic solution.
-+ The sidechains are operated by an **honest majority** (i.e. the most of the block-producing nodes are non-Byzantine).
++ The sidechains are operated by a **rational majority** (see #3) ~~honst majority~~ (i.e. the most of the block-producing nodes are non-Byzantine).
 + The sidechains run any kind of 50%+1 Byzantine fault-tolerant consensus and blockchain formation protocol.
 + A sidechain consensus must have a concept of **epochs**, within which the state of the sidechain reaches finality. 
 + Each epoch must have a predictable duration known before the start of the epoch, i.e. there should be an ability to deterministically compute the time of the next final state for the sidechain before the epoch begins.
@@ -171,13 +171,15 @@ OP_CHECKSIG
 
 This script reveals no more private information about the committer or any other party participating sidechain than a normal P2PKH transaction. In fact it is composed of two P2PKH branches enhanced with CLTV part.
 
+Additionally to the committment transaction, commiter signs and provides to the network a special **slashing transaction** spending the committment transaction output to OP_RETURN as specified in #4. This transaction will be used lately by the *rational majority* in case of byzantine fault of the committer, as described below.
+
 ### Unlocking transactions
 
-Let `ECDSA(*)` be a signature with some private key `*`. According to the notation from the previous sections, `x_a` is the private key that can be only discovered by the *hones majority* in case they can reach the agreement that the *committer* (party `i`) had performed a Byzantine fault within the epoch time scope corresponding to the original *commitment transaction*. `T_a` is the public key of the committer revealed as a result of the *Apophis* protocol; `y` and `A` are the normal private and public keys of the committer.
+Let `ECDSA(*)` be a signature with some private key `*`. According to the notation from the previous sections, `x_a` is the private key that can be only discovered by the *rational majority* in case they can reach the agreement that the *committer* (party `i`) had performed a Byzantine fault within the epoch time scope corresponding to the original *commitment transaction*. `T_a` is the public key of the committer revealed as a result of the *Apophis* protocol; `y` and `A` are the normal private and public keys of the committer.
 
-Once the `x_a` becomes revealed any participant of the honest majority can construct and publish *slashing transaction* spending UTXO from the *commitment transaction* to the output that can be used by slashing transaction originator. This transaction will contain the following `SigScript`: `<ECDSA(x_a)> <T_a>`.
+Once the `x_a` becomes revealed any participant of the rational majority can construct and publish *slashing transaction* spending UTXO from the *commitment transaction* to the OP_RETURN output. This transaction will contain the following `SigScript`: `<ECDSA(x_a)> <T_a>`.
 
-This script will become valid only after the CLTV time from the second branch of the *commitment transaction* will pass, so other participants of the *honest majority* have an opportunity to publish their versions with the same unlocking script, but spending the locked amount to different UTXOs, but with a higher miner fee. This will lead to the "fees race", effectively resulting in Nash equilibrium when practically all of the locked amount is spent for the mining fee, i.e. the money will be transferred to the miner who will include the slashing transactions into the blockchain, guaranteeing fast and efficient slashing before the other CLTV lock will expire. This also keeps economic incentives of the honest majority intact: they win nothing by cooperating against other participants, so the Nash equilibrium for the sidechain consensus protocol is not distorted.
+This script will become valid only after the CLTV time from the second branch of the *commitment transaction* will pass ~~, so other participants of the *rational majority* have an opportunity to publish their versions with the same unlocking script, but spending the locked amount to different UTXOs, but with a higher miner fee. This will lead to the "fees race", effectively resulting in Nash equilibrium when practically all of the locked amount is spent for the mining fee, i.e. the money will be transferred to the miner who will include the slashing transactions into the blockchain, guaranteeing fast and efficient slashing before the other CLTV lock will expire. This also keeps economic incentives of the honest majority intact: they win nothing by cooperating against other participants, so the Nash equilibrium for the sidechain consensus protocol is not distorted.~~ NOT NEEDED WITH #4 IMPROVEMENT  
 
 If there were no witnessed Byzantine fault from the committer, he will be able to unlock its funds at the end of the second epoch with the usual `SigScript`: `<ECDSA(y)> <A>` without the risks that some other parties will be able to spend the UTXO of the *commitment transaction*.
 
