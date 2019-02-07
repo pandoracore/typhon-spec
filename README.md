@@ -87,7 +87,7 @@ A party running the protocol must follow this algorithm:
     sₐ ← ECDSA(Hₐ,rₐ)           -- creates a signature for the hash using the generated private key
     ⟨Hₐ,sₐ⟩ ⇢ 𝒩                -- publishes the hash and signature to the network
     SSSS<rₐ> ⇢ 𝒩               -- runs Shamir secret sharing scheme against the private key
-                                -- and its digital signature with the network
+                                -- and its digital signature with the network (with some modificaions from #2)
     ℍ ← ∅                       -- instantiates set for keeping all hashes and signatures 
                                 -- of the other parties
     ∀ ⟨Hₓ,sₓ | x ∈ N⟩ ⇠ 𝒩      -- for each x-th hash-signature tuple collected from the network:
